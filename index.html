@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emlak Müşteri Yönetimi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section, .list-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .form-section h2, .list-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .customer-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .customer-card {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .customer-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .customer-card.priority-high {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+
+        .customer-card.priority-medium {
+            border-left-color: #f39c12;
+            background: #fef9e7;
+        }
+
+        .customer-card.priority-low {
+            border-left-color: #27ae60;
+            background: #f0fff4;
+        }
+
+        .customer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .customer-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .customer-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-new { background: #3498db; color: white; }
+        .status-contacted { background: #9b59b6; color: white; }
+        .status-negotiating { background: #f39c12; color: white; }
+        .status-closed { background: #27ae60; color: white; }
+
+        .customer-details {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .customer-details p {
+            margin-bottom: 5px;
+        }
+
+        .customer-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #2980b9;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .priority-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .priority-option {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .priority-option.selected {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .priority-high-option { color: #e74c3c; }
+        .priority-medium-option { color: #f39c12; }
+        .priority-low-option { color: #27ae60; }
+
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .export-btn:hover {
+            background: #229954;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 Emlak Müşteri Yönetimi</h1>
+            <p>Müşterilerinizi kolayca takip edin ve yönetin</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="totalCustomers">0</h3>
+                <p>Toplam Müşteri</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="newCustomers">0</h3>
+                <p>Yeni Müşteri</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="negotiatingCustomers">0</h3>
+                <p>Görüşme Aşamasında</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="closedCustomers">0</h3>
+                <p>Kapanan</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2 id="formTitle">Yeni Müşteri Ekle</h2>
+                <form id="customerForm">
+                    <input type="hidden" id="customerId">
+                    
+                    <div class="form-group">
+                        <label for="fullName">Ad Soyad *</label>
+                        <input type="text" id="fullName" required placeholder="Müşteri adı ve soyadı">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Telefon *</label>
+                        <input type="tel" id="phone" required placeholder="0(5XX) XXX XX XX">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">E-posta</label>
+                        <input type="email" id="email" placeholder="ornek@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="propertyType">İlgilendiği Mülk Tipi</label>
+                        <select id="propertyType">
+                            <option value="">Seçiniz</option>
+                            <option value="daire">Daire</option>
+                            <option value="villa">Villa</option>
+                            <option value="arsa">Arsa</option>
+                            <option value="isyeri">İş Yeri</option>
+                            <option value="mustakil">Müstakil Ev</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budget">Bütçe Aralığı</label>
+                        <select id="budget">
+                            <option value="">Seçiniz</option>
+                            <option value="0-500000">0 - 500.000 TL</option>
+                            <option value="500000-1000000">500.000 - 1.000.000 TL</option>
+                            <option value="1000000-2000000">1.000.000 - 2.000.000 TL</option>
+                            <option value="2000000-5000000">2.000.000 - 5.000.000 TL</option>
+                            <option value="5000000+">5.000.000 TL üzeri</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">İstenen Konum</label>
+                        <input type="text" id="location" placeholder="Örn: Kadıköy, İstanbul">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Öncelik</label>
+                        <div class="priority-selector">
+                            <div class="priority-option priority-high-option" data-priority="high">Yüksek</div>
+                            <div class="priority-option priority-medium-option selected" data-priority="medium">Orta</div>
+                            <div class="priority-option priority-low-option" data-priority="low">Düşük</div>
+                        </div>
+                        <input type="hidden" id="priority" value="medium">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Durum</label>
+                        <select id="status">
+                            <option value="new">Yeni</option>
+                            <option value="contacted">İletişime Geçildi</option>
+                            <option value="negotiating">Görüşme Aşamasında</option>
+                            <option value="closed">Kapanan</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notlar</label>
+                        <textarea id="notes" placeholder="Müşteri hakkında önemli notlar..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="button" class="btn btn-secondary" id="cancelBtn" style="display:none;">İptal</button>
+                </form>
+                
+                <button class="btn export-btn" onclick="exportData()">📥 Verileri Dışa Aktar (JSON)</button>
+            </div>
+
+            <div class="list-section">
+                <h2>Müşteri Listesi</h2>
+                
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Müşteri ara (isim, telefon, konum...)">
+                </div>
+
+                <div class="customer-list" id="customerList">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <p>Henüz müşteri kaydı bulunmuyor.</p>
+                        <p>Yeni müşteri eklemek için sol formu kullanın.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Veri yönetimi
+        let customers = JSON.parse(localStorage.getItem('emlakCustomers')) || [];
+        let editingId = null;
+
+        // Öncelik seçimi
+        document.querySelectorAll('.priority-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.priority-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('priority').value = this.dataset.priority;
+            });
+        });
+
+        // Form gönderimi
+        document.getElementById('customerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const customerData = {
+                id: editingId || Date.now(),
+                fullName: document.getElementById('fullName').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                propertyType: document.getElementById('propertyType').value,
+                budget: document.getElementById('budget').value,
+                location: document.getElementById('location').value,
+                priority: document.getElementById('priority').value,
+                status: document.getElementById('status').value,
+                notes: document.getElementById('notes').value,
+                createdAt: editingId ? customers.find(c => c.id === editingId).createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (editingId) {
+                const index = customers.findIndex(c => c.id === editingId);
+                customers[index] = customerData;
+                editingId = null;
+                document.getElementById('formTitle').textContent = 'Yeni Müşteri Ekle';
+                document.getElementById('cancelBtn').style.display = 'none';
+            } else {
+                customers.push(customerData);
+            }
+
+            saveCustomers();
+            renderCustomers();
+            this.reset();
+            document.querySelector('.priority-option[data-priority="medium"]').click();
+            updateStats();
+        });
+
+        // İptal butonu
+        document.getElementById('cancelBtn').addEventListener('click', function() {
+            editingId = null;
+            document.getElementById('customerForm').reset();
+            document.getElementById('formTitle').textContent = 'Yeni Müşteri Ekle';
+            this.style.display = 'none';
+            document.querySelector('.priority-option[data-priority="medium"]').click();
+        });
+
+        // Verileri kaydet
+        function saveCustomers() {
+            localStorage.setItem('emlakCustomers', JSON.stringify(customers));
+        }
+
+        // Müşterileri render et
+        function renderCustomers(searchTerm = '') {
+            const listContainer = document.getElementById('customerList');
+            const filteredCustomers = customers.filter(c => 
+                c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                c.phone.includes(searchTerm) ||
+                c.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                c.email.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            if (filteredCustomers.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <p>${searchTerm ? 'Arama sonucu bulunamadı.' : 'Henüz müşteri kaydı bulunmuyor.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sıralama: Öncelik (yüksek->düşük) ve tarih (yeni->eski)
+            const sortedCustomers = filteredCustomers.sort((a, b) => {
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                if (priorityOrder[b.priority] !== priorityOrder[a.priority]) {
+                    return priorityOrder[b.priority] - priorityOrder[a.priority];
+                }
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+
+            listContainer.innerHTML = sortedCustomers.map(customer => `
+                <div class="customer-card priority-${customer.priority}">
+                    <div class="customer-header">
+                        <div>
+                            <div class="customer-name">${customer.fullName}</div>
+                            <small style="color: #999;">${formatDate(customer.createdAt)}</small>
+                        </div>
+                        <span class="customer-status status-${customer.status}">
+                            ${getStatusText(customer.status)}
+                        </span>
+                    </div>
+                    <div class="customer-details">
+                        <p>📱 ${customer.phone}</p>
+                        ${customer.email ? `<p>✉️ ${customer.email}</p>` : ''}
+                        <p>🏠 ${getPropertyTypeText(customer.propertyType) || 'Belirtilmemiş'} 
+                           ${customer.budget ? `• 💰 ${getBudgetText(customer.budget)}` : ''}</p>
+                        ${customer.location ? `<p>📍 ${customer.location}</p>` : ''}
+                        ${customer.notes ? `<p style="margin-top:8px; font-style:italic; color:#666;">📝 ${customer.notes}</p>` : ''}
+                    </div>
+                    <div class="customer-actions">
+                        <button class="btn-small btn-edit" onclick="editCustomer(${customer.id})">Düzenle</button>
+                        <button class="btn-small btn-delete" onclick="deleteCustomer(${customer.id})">Sil</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Müşteri düzenle
+        function editCustomer(id) {
+            const customer = customers.find(c => c.id === id);
+            if (!customer) return;
+
+            editingId = id;
+            document.getElementById('customerId').value = customer.id;
+            document.getElementById('fullName').value = customer.fullName;
+            document.getElementById('phone').value = customer.phone;
+            document.getElementById('email').value = customer.email;
+            document.getElementById('propertyType').value = customer.propertyType;
+            document.getElementById('budget').value = customer.budget;
+            document.getElementById('location').value = customer.location;
+            document.getElementById('status').value = customer.status;
+            document.getElementById('notes').value = customer.notes;
+            
+            document.querySelectorAll('.priority-option').forEach(o => {
+                o.classList.toggle('selected', o.dataset.priority === customer.priority);
+            });
+            document.getElementById('priority').value = customer.priority;
+
+            document.getElementById('formTitle').textContent = 'Müşteri Düzenle';
+            document.getElementById('cancelBtn').style.display = 'block';
+            
+            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Müşteri sil
+        function deleteCustomer(id) {
+            if (confirm('Bu müşteriyi silmek istediğinize emin misiniz?')) {
+                customers = customers.filter(c => c.id !== id);
+                saveCustomers();
+                renderCustomers(document.getElementById('searchInput').value);
+                updateStats();
+            }
+        }
+
+        // Arama
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            renderCustomers(e.target.value);
+        });
+
+        // İstatistikleri güncelle
+        function updateStats() {
+            document.getElementById('totalCustomers').textContent = customers.length;
+            document.getElementById('newCustomers').textContent = customers.filter(c => c.status === 'new').length;
+            document.getElementById('negotiatingCustomers').textContent = customers.filter(c => c.status === 'negotiating').length;
+            document.getElementById('closedCustomers').textContent = customers.filter(c => c.status === 'closed').length;
+        }
+
+        // Yardımcı fonksiyonlar
+        function getStatusText(status) {
+            const statuses = {
+                new: 'Yeni',
+                contacted: 'İletişime Geçildi',
+                negotiating: 'Görüşme Aşamasında',
+                closed: 'Kapanan'
+            };
+            return statuses[status] || status;
+        }
+
+        function getPropertyTypeText(type) {
+            const types = {
+                daire: 'Daire',
+                villa: 'Villa',
+                arsa: 'Arsa',
+                isyeri: 'İş Yeri',
+                mustakil: 'Müstakil Ev'
+            };
+            return types[type] || type;
+        }
+
+        function getBudgetText(budget) {
+            const budgets = {
+                '0-500000': '0 - 500.000 TL',
+                '500000-1000000': '500.000 - 1.000.000 TL',
+                '1000000-2000000': '1.000.000 - 2.000.000 TL',
+                '2000000-5000000': '2.000.000 - 5.000.000 TL',
+                '5000000+': '5.000.000 TL üzeri'
+            };
+            return budgets[budget] || budget;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('tr-TR', { 
+                day: '2-digit', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Verileri dışa aktar
+        function exportData() {
+            const dataStr = JSON.stringify(customers, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `emlak-musterileri-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Başlangıç
+        renderCustomers();
+        updateStats();
+    </script>
+</body>
+</html>
