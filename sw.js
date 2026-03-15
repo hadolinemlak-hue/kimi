@@ -2,7 +2,6 @@ const CACHE_VERSION = "emlak-crm-v1.0.0";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
-// Uygulamanın temel dosyaları
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -11,23 +10,22 @@ const APP_SHELL = [
   "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
 ];
 
-// Kurulum
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then(async (cache) => {
-      for (const asset of APP_SHELL) {
-        try {
-          await cache.add(asset);
-        } catch (err) {
-          // Bazı dosyalar yoksa kurulum patlamasın
-          console.warn("Cache eklenemedi:", asset, err);
+    caches.open(STATIC_CACHE)
+      .then(async (cache) => {
+        for (const asset of APP_SHELL) {
+          try {
+            await cache.add(asset);
+          } catch (err) {
+            console.warn("Cache eklenemedi:", asset, err);
+          }
         }
-      }
-    }).then(() => self.skipWaiting())
+      })
+      .then(() => self.skipWaiting())
   );
 });
 
-// Aktivasyon
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -40,7 +38,6 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Yardımcı: dynamic cache'e yaz
 async function putInDynamicCache(request, response) {
   try {
     const cache = await caches.open(DYNAMIC_CACHE);
@@ -51,19 +48,14 @@ async function putInDynamicCache(request, response) {
   return response;
 }
 
-// Fetch
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
-  // Sadece GET isteklerini yakala
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-
-  // Chrome extension vb. şeyleri pas geç
   if (!url.protocol.startsWith("http")) return;
 
-  // HTML sayfa navigasyonları: önce ağ, olmazsa cache/ana sayfa
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
@@ -125,13 +117,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // CSS / JS / aynı origin dosyaları: önce cache, sonra ağ
   if (
     request.destination === "style" ||
     request.destination === "script" ||
     request.destination === "worker" ||
     request.destination === "manifest" ||
     request.destination === "font" ||
+    request.destination === "image" ||
     url.origin === self.location.origin
   ) {
     event.respondWith(
@@ -142,15 +134,13 @@ self.addEventListener("fetch", (event) => {
           const networkResponse = await fetch(request);
           return putInDynamicCache(request, networkResponse);
         } catch (err) {
-          // Ağ yoksa ve cache yoksa boş bırak
-          throw err;
+          return cachedResponse || Promise.reject(err);
         }
       })
     );
     return;
   }
 
-  // Diğer tüm istekler: önce ağ, olmazsa cache
   event.respondWith(
     fetch(request)
       .then((networkResponse) => putInDynamicCache(request, networkResponse))
