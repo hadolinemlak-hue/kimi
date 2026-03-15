@@ -2,9 +2,19 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#FF7A00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Emlak CRM">
     <title>Emlak CRM - Portföy Yönetim Sistemi</title>
+
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./icons/icon-192.png">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         * {
             margin: 0;
@@ -36,7 +46,6 @@
             overflow-x: hidden;
         }
 
-        /* SIDEBAR */
         .sidebar {
             position: fixed;
             left: 0;
@@ -107,7 +116,6 @@
             text-align: center;
         }
 
-        /* MAIN CONTENT */
         .main-content {
             margin-left: 260px;
             min-height: 100vh;
@@ -115,7 +123,6 @@
             flex-direction: column;
         }
 
-        /* HEADER - SABİT */
         .top-header {
             position: sticky;
             top: 0;
@@ -149,13 +156,11 @@
             gap: 12px;
         }
 
-        /* CONTENT AREA */
         .content-area {
             flex: 1;
             padding: 32px;
         }
 
-        /* PAGE SECTIONS */
         .page-section {
             display: none;
         }
@@ -176,7 +181,6 @@
             }
         }
 
-        /* BUTTONS */
         .btn {
             padding: 12px 24px;
             border: none;
@@ -229,7 +233,6 @@
             font-size: 14px;
         }
 
-        /* CARDS */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -337,7 +340,6 @@
             border-top: 1px solid var(--border);
         }
 
-        /* FORMS */
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -390,7 +392,6 @@
             font-family: inherit;
         }
 
-        /* MODAL */
         .modal {
             display: none;
             position: fixed;
@@ -469,7 +470,6 @@
             justify-content: flex-end;
         }
 
-        /* TOAST NOTIFICATIONS */
         .toast-container {
             position: fixed;
             top: 20px;
@@ -532,7 +532,6 @@
             color: var(--warning);
         }
 
-        /* FILTERS */
         .filters-bar {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -550,7 +549,6 @@
             min-width: 200px;
         }
 
-        /* STATS */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -597,7 +595,6 @@
             margin-top: 4px;
         }
 
-        /* MATCH SCORE */
         .match-score {
             display: flex;
             align-items: center;
@@ -632,7 +629,6 @@
             background: var(--danger);
         }
 
-        /* EMPTY STATE */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -652,7 +648,6 @@
             color: var(--text-secondary);
         }
 
-        /* RESPONSIVE */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -681,6 +676,10 @@
             .filter-group {
                 width: 100%;
             }
+
+            .match-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .mobile-menu-btn {
@@ -697,14 +696,12 @@
             justify-content: center;
         }
 
-        /* BUDGET RANGE */
         .budget-range {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
 
-        /* MATCH CARD */
         .match-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -720,6 +717,8 @@
             margin-bottom: 20px;
             padding-bottom: 16px;
             border-bottom: 1px solid var(--border);
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .match-grid {
@@ -769,10 +768,8 @@
     </style>
 </head>
 <body>
-    <!-- TOAST CONTAINER -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h1><i class="fas fa-building"></i> Emlak CRM</h1>
@@ -797,29 +794,23 @@
         </nav>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="main-content">
-        <!-- TOP HEADER -->
         <header class="top-header">
             <div class="header-content">
                 <div style="display: flex; align-items: center; gap: 16px;">
                     <button class="mobile-menu-btn" id="mobileMenuBtn">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h2 class="header-title">
+                    <h2 class="header-title" id="pageTitleWrapper">
                         <i class="fas fa-home"></i>
                         <span id="pageTitle">Portföy Yönetimi</span>
                     </h2>
                 </div>
-                <div class="header-actions" id="headerActions">
-                    <!-- Dynamic buttons will be inserted here -->
-                </div>
+                <div class="header-actions" id="headerActions"></div>
             </div>
         </header>
 
-        <!-- CONTENT AREA -->
         <div class="content-area">
-            <!-- PORTFOLIO PAGE -->
             <section class="page-section active" id="portfolioPage">
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -886,9 +877,7 @@
                     </div>
                 </div>
 
-                <div class="cards-grid" id="portfolioGrid">
-                    <!-- Portfolio cards will be inserted here -->
-                </div>
+                <div class="cards-grid" id="portfolioGrid"></div>
 
                 <div class="empty-state" id="portfolioEmpty" style="display: none;">
                     <i class="fas fa-home"></i>
@@ -897,7 +886,6 @@
                 </div>
             </section>
 
-            <!-- CUSTOMERS PAGE -->
             <section class="page-section" id="customersPage">
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -953,9 +941,7 @@
                     </div>
                 </div>
 
-                <div class="cards-grid" id="customersGrid">
-                    <!-- Customer cards will be inserted here -->
-                </div>
+                <div class="cards-grid" id="customersGrid"></div>
 
                 <div class="empty-state" id="customersEmpty" style="display: none;">
                     <i class="fas fa-users"></i>
@@ -964,7 +950,6 @@
                 </div>
             </section>
 
-            <!-- MATCHES PAGE -->
             <section class="page-section" id="matchesPage">
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -996,9 +981,7 @@
                     </div>
                 </div>
 
-                <div id="matchesContainer">
-                    <!-- Matches will be inserted here -->
-                </div>
+                <div id="matchesContainer"></div>
 
                 <div class="empty-state" id="matchesEmpty" style="display: none;">
                     <i class="fas fa-link"></i>
@@ -1007,7 +990,6 @@
                 </div>
             </section>
 
-            <!-- BACKUP PAGE -->
             <section class="page-section" id="backupPage">
                 <div class="card" style="max-width: 600px; margin: 0 auto;">
                     <div class="card-header">
@@ -1061,7 +1043,6 @@
         </div>
     </main>
 
-    <!-- PORTFOLIO MODAL -->
     <div class="modal" id="portfolioModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1173,7 +1154,6 @@
         </div>
     </div>
 
-    <!-- CUSTOMER MODAL -->
     <div class="modal" id="customerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1278,26 +1258,25 @@
     </div>
 
     <script>
-        // ==================== DATA STORAGE ====================
         let portfolios = JSON.parse(localStorage.getItem('portfolios')) || [];
         let customers = JSON.parse(localStorage.getItem('customers')) || [];
         let confirmedMatches = JSON.parse(localStorage.getItem('confirmedMatches')) || [];
 
-        // ==================== NAVIGATION ====================
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
                 const page = item.dataset.page;
                 switchPage(page);
+                if (window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('mobile-open');
+                }
             });
         });
 
         function switchPage(page) {
-            // Update nav items
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.toggle('active', item.dataset.page === page);
             });
 
-            // Update page sections
             document.querySelectorAll('.page-section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -1332,10 +1311,12 @@
             const config = pageConfig[page];
             if (config) {
                 document.getElementById(config.element).classList.add('active');
-                document.getElementById('pageTitle').innerHTML = `<i class="fas ${config.icon}"></i> ${config.title}`;
+                document.getElementById('pageTitleWrapper').innerHTML = `
+                    <i class="fas ${config.icon}"></i>
+                    <span id="pageTitle">${config.title}</span>
+                `;
                 document.getElementById('headerActions').innerHTML = config.actions;
 
-                // Load page data
                 if (page === 'portfolio') renderPortfolios();
                 if (page === 'customers') renderCustomers();
                 if (page === 'matches') renderMatches();
@@ -1343,16 +1324,15 @@
             }
         }
 
-        // Mobile menu
         document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
             document.getElementById('sidebar').classList.toggle('mobile-open');
         });
 
-        // ==================== PORTFOLIO FUNCTIONS ====================
         function openPortfolioModal(id = null) {
             const modal = document.getElementById('portfolioModal');
             const form = document.getElementById('portfolioForm');
             form.reset();
+            document.getElementById('portfolioId').value = '';
 
             if (id) {
                 const property = portfolios.find(p => p.id === id);
@@ -1387,25 +1367,30 @@
         }
 
         function savePortfolio() {
+            const form = document.getElementById('portfolioForm');
+            if (!form.reportValidity()) return;
+
             const id = document.getElementById('portfolioId').value;
+            const existing = id ? portfolios.find(p => p.id === id) : null;
+
             const property = {
                 id: id || Date.now().toString(),
-                number: id ? portfolios.find(p => p.id === id).number : `IL-${Date.now().toString().slice(-6)}`,
-                title: document.getElementById('portfolioTitle').value,
+                number: existing ? existing.number : `IL-${Date.now().toString().slice(-6)}`,
+                title: document.getElementById('portfolioTitle').value.trim(),
                 type: document.getElementById('portfolioType').value,
                 status: document.getElementById('portfolioStatus').value,
                 price: parseFloat(document.getElementById('portfolioPrice').value),
                 area: parseFloat(document.getElementById('portfolioArea').value),
                 rooms: document.getElementById('portfolioRooms').value,
-                city: document.getElementById('portfolioCity').value,
-                district: document.getElementById('portfolioDistrict').value,
-                neighborhood: document.getElementById('portfolioNeighborhood').value,
-                floor: document.getElementById('portfolioFloor').value,
+                city: document.getElementById('portfolioCity').value.trim(),
+                district: document.getElementById('portfolioDistrict').value.trim(),
+                neighborhood: document.getElementById('portfolioNeighborhood').value.trim(),
+                floor: document.getElementById('portfolioFloor').value.trim(),
                 buildingAge: document.getElementById('portfolioBuildingAge').value,
                 heating: document.getElementById('portfolioHeating').value,
-                description: document.getElementById('portfolioDescription').value,
+                description: document.getElementById('portfolioDescription').value.trim(),
                 label: document.getElementById('portfolioLabel').value,
-                createdAt: id ? portfolios.find(p => p.id === id).createdAt : new Date().toISOString()
+                createdAt: existing ? existing.createdAt : new Date().toISOString()
             };
 
             if (id) {
@@ -1434,25 +1419,25 @@
         function renderPortfolios() {
             const grid = document.getElementById('portfolioGrid');
             const empty = document.getElementById('portfolioEmpty');
-            
-            // Apply filters
+
             const searchTerm = document.getElementById('searchPortfolio').value.toLowerCase();
             const typeFilter = document.getElementById('filterPropertyType').value;
             const statusFilter = document.getElementById('filterPropertyStatus').value;
             const labelFilter = document.getElementById('filterPropertyLabel').value;
 
-            let filtered = portfolios.filter(p => {
-                const matchSearch = !searchTerm || 
-                    p.title.toLowerCase().includes(searchTerm) || 
+            const filtered = portfolios.filter(p => {
+                const matchSearch = !searchTerm ||
+                    p.title.toLowerCase().includes(searchTerm) ||
                     p.city.toLowerCase().includes(searchTerm) ||
                     (p.district && p.district.toLowerCase().includes(searchTerm));
+
                 const matchType = !typeFilter || p.type === typeFilter;
                 const matchStatus = !statusFilter || p.status === statusFilter;
                 const matchLabel = !labelFilter || p.label === labelFilter;
+
                 return matchSearch && matchType && matchStatus && matchLabel;
             });
 
-            // Update stats
             document.getElementById('totalProperties').textContent = portfolios.length;
             document.getElementById('activeProperties').textContent = portfolios.filter(p => p.label === 'Aktif').length;
             document.getElementById('soldProperties').textContent = portfolios.filter(p => p.label === 'Satıldı' || p.label === 'Kiralandı').length;
@@ -1500,17 +1485,16 @@
             `).join('');
         }
 
-        // Portfolio filters
         document.getElementById('searchPortfolio').addEventListener('input', renderPortfolios);
         document.getElementById('filterPropertyType').addEventListener('change', renderPortfolios);
         document.getElementById('filterPropertyStatus').addEventListener('change', renderPortfolios);
         document.getElementById('filterPropertyLabel').addEventListener('change', renderPortfolios);
 
-        // ==================== CUSTOMER FUNCTIONS ====================
         function openCustomerModal(id = null) {
             const modal = document.getElementById('customerModal');
             const form = document.getElementById('customerForm');
             form.reset();
+            document.getElementById('customerId').value = '';
 
             if (id) {
                 const customer = customers.find(c => c.id === id);
@@ -1544,7 +1528,11 @@
         }
 
         function saveCustomer() {
+            const form = document.getElementById('customerForm');
+            if (!form.reportValidity()) return;
+
             const id = document.getElementById('customerId').value;
+            const existing = id ? customers.find(c => c.id === id) : null;
             const minBudget = parseFloat(document.getElementById('customerMinBudget').value);
             const maxBudget = parseFloat(document.getElementById('customerMaxBudget').value);
 
@@ -1555,21 +1543,21 @@
 
             const customer = {
                 id: id || Date.now().toString(),
-                number: id ? customers.find(c => c.id === id).number : `M-${Date.now().toString().slice(-6)}`,
-                name: document.getElementById('customerName').value,
-                phone: document.getElementById('customerPhone').value,
-                email: document.getElementById('customerEmail').value,
+                number: existing ? existing.number : `M-${Date.now().toString().slice(-6)}`,
+                name: document.getElementById('customerName').value.trim(),
+                phone: document.getElementById('customerPhone').value.trim(),
+                email: document.getElementById('customerEmail').value.trim(),
                 searchType: document.getElementById('customerSearchType').value,
                 propertyType: document.getElementById('customerPropertyType').value,
-                minBudget: minBudget,
-                maxBudget: maxBudget,
-                city: document.getElementById('customerCity').value,
-                district: document.getElementById('customerDistrict').value,
+                minBudget,
+                maxBudget,
+                city: document.getElementById('customerCity').value.trim(),
+                district: document.getElementById('customerDistrict').value.trim(),
                 minArea: document.getElementById('customerMinArea').value,
                 roomPreference: document.getElementById('customerRoomPreference').value,
                 status: document.getElementById('customerStatus').value,
-                notes: document.getElementById('customerNotes').value,
-                createdAt: id ? customers.find(c => c.id === id).createdAt : new Date().toISOString()
+                notes: document.getElementById('customerNotes').value.trim(),
+                createdAt: existing ? existing.createdAt : new Date().toISOString()
             };
 
             if (id) {
@@ -1598,22 +1586,22 @@
         function renderCustomers() {
             const grid = document.getElementById('customersGrid');
             const empty = document.getElementById('customersEmpty');
-            
-            // Apply filters
+
             const searchTerm = document.getElementById('searchCustomer').value.toLowerCase();
             const typeFilter = document.getElementById('filterCustomerType').value;
             const statusFilter = document.getElementById('filterCustomerStatus').value;
 
-            let filtered = customers.filter(c => {
-                const matchSearch = !searchTerm || 
-                    c.name.toLowerCase().includes(searchTerm) || 
+            const filtered = customers.filter(c => {
+                const matchSearch = !searchTerm ||
+                    c.name.toLowerCase().includes(searchTerm) ||
                     c.phone.includes(searchTerm);
+
                 const matchType = !typeFilter || c.searchType === typeFilter;
                 const matchStatus = !statusFilter || c.status === statusFilter;
+
                 return matchSearch && matchType && matchStatus;
             });
 
-            // Update stats
             document.getElementById('totalCustomers').textContent = customers.length;
             document.getElementById('activeCustomers').textContent = customers.filter(c => c.status === 'Aktif').length;
             document.getElementById('buyerCustomers').textContent = customers.filter(c => c.searchType === 'Alıcı').length;
@@ -1666,42 +1654,37 @@
             `).join('');
         }
 
-        // Customer filters
         document.getElementById('searchCustomer').addEventListener('input', renderCustomers);
         document.getElementById('filterCustomerType').addEventListener('change', renderCustomers);
         document.getElementById('filterCustomerStatus').addEventListener('change', renderCustomers);
 
-        // ==================== MATCHING FUNCTIONS ====================
         function calculateMatchScore(property, customer) {
             let score = 0;
-            let reasons = [];
+            const reasons = [];
 
-            // BÜTÇE KONTROLÜ - EN ÖNEMLİ (40 puan)
             if (property.price >= customer.minBudget && property.price <= customer.maxBudget) {
                 score += 40;
                 reasons.push('Bütçe uyumlu');
             } else {
-                return { score: 0, reasons: ['Bütçe uyumsuz'] }; // Bütçe uymazsa eşleşme yok
+                return { score: 0, reasons: ['Bütçe uyumsuz'] };
             }
 
-            // TÜR UYUMU (20 puan)
             if (property.type === customer.propertyType) {
                 score += 20;
                 reasons.push('Tür uyumlu');
             }
 
-            // DURUM UYUMU (20 puan)
             const statusMatch = (property.status === 'Satılık' && customer.searchType === 'Alıcı') ||
                                (property.status === 'Kiralık' && customer.searchType === 'Kiracı');
+
             if (statusMatch) {
                 score += 20;
                 reasons.push('Durum uyumlu');
             }
 
-            // KONUM UYUMU (10 puan)
             if (customer.city && property.city.toLowerCase() === customer.city.toLowerCase()) {
                 score += 5;
-                if (customer.district && property.district && 
+                if (customer.district && property.district &&
                     property.district.toLowerCase() === customer.district.toLowerCase()) {
                     score += 5;
                     reasons.push('Konum tam uyumlu');
@@ -1710,13 +1693,11 @@
                 }
             }
 
-            // METREKARE UYUMU (5 puan)
             if (customer.minArea && property.area >= parseFloat(customer.minArea)) {
                 score += 5;
                 reasons.push('Metrekare uygun');
             }
 
-            // ODA UYUMU (5 puan)
             if (customer.roomPreference && property.rooms === customer.roomPreference) {
                 score += 5;
                 reasons.push('Oda sayısı uyumlu');
@@ -1729,11 +1710,11 @@
             const container = document.getElementById('matchesContainer');
             const empty = document.getElementById('matchesEmpty');
 
-            // Calculate all matches
             const allMatches = [];
+
             customers.forEach(customer => {
                 portfolios.forEach(property => {
-                    if (property.label === 'Aktif') { // Sadece aktif ilanlar
+                    if (property.label === 'Aktif') {
                         const matchResult = calculateMatchScore(property, customer);
                         if (matchResult.score > 0) {
                             allMatches.push({
@@ -1741,7 +1722,7 @@
                                 property,
                                 score: matchResult.score,
                                 reasons: matchResult.reasons,
-                                confirmed: confirmedMatches.some(m => 
+                                confirmed: confirmedMatches.some(m =>
                                     m.customerId === customer.id && m.propertyId === property.id
                                 )
                             });
@@ -1750,10 +1731,8 @@
                 });
             });
 
-            // Sort by score
             allMatches.sort((a, b) => b.score - a.score);
 
-            // Update stats
             document.getElementById('totalMatches').textContent = allMatches.length;
             document.getElementById('highScoreMatches').textContent = allMatches.filter(m => m.score > 80).length;
             document.getElementById('confirmedMatches').textContent = confirmedMatches.length;
@@ -1767,10 +1746,11 @@
             empty.style.display = 'none';
             container.innerHTML = allMatches.map((match, index) => {
                 const scoreClass = match.score > 80 ? 'score-high' : match.score > 50 ? 'score-medium' : 'score-low';
+
                 return `
                     <div class="match-card">
                         <div class="match-card-header">
-                            <div>
+                            <div style="flex:1;">
                                 <h4 style="color: var(--primary); margin-bottom: 8px;">Eşleşme #${index + 1}</h4>
                                 <div class="match-score">
                                     <span style="color: var(--text-muted); min-width: 80px;">Uyum Skoru:</span>
@@ -1783,11 +1763,11 @@
                                     ${match.reasons.join(' • ')}
                                 </div>
                             </div>
-                            ${match.confirmed ? 
-                                '<span class="card-badge badge-active"><i class="fas fa-check"></i> Onaylandı</span>' : 
-                                `<button class="btn btn-success btn-small" onclick="confirmMatch('${match.customer.id}', '${match.property.id}')">
-                                    <i class="fas fa-check"></i> Onayla
-                                </button>`
+                            ${match.confirmed
+                                ? '<span class="card-badge badge-active"><i class="fas fa-check"></i> Onaylandı</span>'
+                                : `<button class="btn btn-success btn-small" onclick="confirmMatch('${match.customer.id}', '${match.property.id}')">
+                                        <i class="fas fa-check"></i> Onayla
+                                   </button>`
                             }
                         </div>
                         <div class="match-grid">
@@ -1823,12 +1803,18 @@
         }
 
         function confirmMatch(customerId, propertyId) {
-            const match = {
+            const exists = confirmedMatches.some(m => m.customerId === customerId && m.propertyId === propertyId);
+            if (exists) {
+                showToast('Bu eşleşme zaten onaylı', 'warning');
+                return;
+            }
+
+            confirmedMatches.push({
                 customerId,
                 propertyId,
                 confirmedAt: new Date().toISOString()
-            };
-            confirmedMatches.push(match);
+            });
+
             localStorage.setItem('confirmedMatches', JSON.stringify(confirmedMatches));
             showToast('Eşleşme onaylandı', 'success');
             renderMatches();
@@ -1839,7 +1825,6 @@
             showToast('Eşleşmeler yenilendi', 'success');
         }
 
-        // ==================== BACKUP FUNCTIONS ====================
         function updateBackupStats() {
             document.getElementById('backupStatsPortfolio').textContent = portfolios.length;
             document.getElementById('backupStatsCustomers').textContent = customers.length;
@@ -1862,7 +1847,7 @@
                 customers,
                 confirmedMatches,
                 exportDate: new Date().toISOString(),
-                version: '1.0'
+                version: '1.0.0'
             };
 
             const dataStr = JSON.stringify(backup, null, 2);
@@ -1891,7 +1876,7 @@
             reader.onload = (event) => {
                 try {
                     const backup = JSON.parse(event.target.result);
-                    
+
                     if (!backup.portfolios || !backup.customers || !backup.confirmedMatches) {
                         showToast('Geçersiz yedek dosyası!', 'error');
                         return;
@@ -1920,29 +1905,44 @@
             e.target.value = '';
         });
 
-        // ==================== TOAST NOTIFICATIONS ====================
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
-            
-            const icon = type === 'success' ? 'fa-check-circle' : 
-                        type === 'error' ? 'fa-times-circle' : 'fa-exclamation-circle';
-            
+
+            const icon = type === 'success'
+                ? 'fa-check-circle'
+                : type === 'error'
+                ? 'fa-times-circle'
+                : 'fa-exclamation-circle';
+
             toast.innerHTML = `
                 <i class="fas ${icon}"></i>
                 <span>${message}</span>
             `;
-            
+
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.remove();
             }, 3000);
         }
 
-        // ==================== INITIALIZE ====================
-        renderPortfolios();
+        window.addEventListener('click', (e) => {
+            if (e.target.id === 'portfolioModal') closePortfolioModal();
+            if (e.target.id === 'customerModal') closeCustomerModal();
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log('Service Worker kayıt edildi'))
+                    .catch(err => console.error('SW hatası:', err));
+            });
+        }
+
+        switchPage('portfolio');
+        updateBackupStats();
     </script>
 </body>
 </html>
