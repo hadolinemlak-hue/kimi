@@ -235,6 +235,12 @@
             font-size: 14px;
         }
 
+        .page-action-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -432,6 +438,7 @@
             color: var(--text-primary);
             font-size: 15px;
             transition: all 0.2s ease;
+            width: 100%;
         }
 
         .form-control:focus {
@@ -852,22 +859,6 @@
             text-align: center;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-
-        .loading i {
-            font-size: 32px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -932,6 +923,14 @@
             .property-image,
             .property-image-placeholder {
                 height: 200px;
+            }
+
+            .page-action-bar {
+                justify-content: stretch;
+            }
+
+            .page-action-bar .btn {
+                width: 100%;
             }
         }
     </style>
@@ -1011,6 +1010,12 @@
                     </div>
                 </div>
 
+                <div class="page-action-bar">
+                    <button class="btn btn-primary" onclick="openPortfolioModal()">
+                        <i class="fas fa-plus"></i> Yeni İlan Ekle
+                    </button>
+                </div>
+
                 <div class="filters-bar">
                     <div class="filter-group">
                         <label><i class="fas fa-search"></i> Ara</label>
@@ -1086,6 +1091,12 @@
                     </div>
                 </div>
 
+                <div class="page-action-bar">
+                    <button class="btn btn-primary" onclick="openCustomerModal()">
+                        <i class="fas fa-plus"></i> Yeni Müşteri Ekle
+                    </button>
+                </div>
+
                 <div class="filters-bar">
                     <div class="filter-group">
                         <label><i class="fas fa-search"></i> Ara</label>
@@ -1148,6 +1159,12 @@
                             <p>Onaylanmış</p>
                         </div>
                     </div>
+                </div>
+
+                <div class="page-action-bar">
+                    <button class="btn btn-secondary" onclick="refreshMatches()">
+                        <i class="fas fa-sync"></i> Eşleşmeleri Yenile
+                    </button>
                 </div>
 
                 <div id="matchesContainer"></div>
@@ -1313,16 +1330,10 @@
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <label><i class="fas fa-camera"></i> İlan Fotoğrafları</label>
                             <div class="photo-upload-box">
-                                <input
-                                    type="file"
-                                    id="portfolioImages"
-                                    class="form-control"
-                                    accept="image/*"
-                                    multiple
-                                >
+                                <input type="file" id="portfolioImages" class="form-control" accept="image/*" multiple>
                                 <div class="photo-help">
                                     JPG / PNG / WebP yükleyebilirsiniz. Fotoğraflar otomatik küçültülüp sıkıştırılır.
-                                    İlk fotoğraf ilan kartında kapak görseli olarak kullanılır.
+                                    İlk fotoğraf ilan kartında kapak fotoğrafı olarak kullanılır. En fazla 10 fotoğraf eklenebilir.
                                 </div>
                                 <div class="photo-preview-grid" id="portfolioImagePreview"></div>
                             </div>
@@ -1467,6 +1478,7 @@
             if (cleaned.startsWith('0')) {
                 cleaned = '90' + cleaned.substring(1);
             } else if (cleaned.startsWith('90')) {
+                // olduğu gibi bırak
             } else if (cleaned.length === 10) {
                 cleaned = '90' + cleaned;
             }
@@ -1528,6 +1540,7 @@
 
                 reader.onload = event => {
                     const img = new Image();
+
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let { width, height } = img;
@@ -1572,8 +1585,6 @@
                 return;
             }
 
-            showToast('Fotoğraflar hazırlanıyor...', 'success');
-
             try {
                 for (const file of validFiles) {
                     const compressed = await compressImage(file);
@@ -1593,6 +1604,7 @@
             item.addEventListener('click', () => {
                 const page = item.dataset.page;
                 switchPage(page);
+
                 if (window.innerWidth <= 768) {
                     document.getElementById('sidebar').classList.remove('mobile-open');
                 }
@@ -1613,19 +1625,19 @@
                     element: 'portfolioPage',
                     title: 'Portföy Yönetimi',
                     icon: 'fa-home',
-                    actions: '<button class="btn btn-primary" onclick="openPortfolioModal()"><i class="fas fa-plus"></i> Yeni İlan Ekle</button>'
+                    actions: ''
                 },
                 customers: {
                     element: 'customersPage',
                     title: 'Müşteri Yönetimi',
                     icon: 'fa-users',
-                    actions: '<button class="btn btn-primary" onclick="openCustomerModal()"><i class="fas fa-plus"></i> Yeni Müşteri Ekle</button>'
+                    actions: ''
                 },
                 matches: {
                     element: 'matchesPage',
                     title: 'Eşleştirme',
                     icon: 'fa-link',
-                    actions: '<button class="btn btn-secondary" onclick="refreshMatches()"><i class="fas fa-sync"></i> Yenile</button>'
+                    actions: ''
                 },
                 backup: {
                     element: 'backupPage',
@@ -1636,19 +1648,19 @@
             };
 
             const config = pageConfig[page];
-            if (config) {
-                document.getElementById(config.element).classList.add('active');
-                document.getElementById('pageTitleWrapper').innerHTML = `
-                    <i class="fas ${config.icon}"></i>
-                    <span id="pageTitle">${config.title}</span>
-                `;
-                document.getElementById('headerActions').innerHTML = config.actions;
+            if (!config) return;
 
-                if (page === 'portfolio') renderPortfolios();
-                if (page === 'customers') renderCustomers();
-                if (page === 'matches') renderMatches();
-                if (page === 'backup') updateBackupStats();
-            }
+            document.getElementById(config.element).classList.add('active');
+            document.getElementById('pageTitleWrapper').innerHTML = `
+                <i class="fas ${config.icon}"></i>
+                <span id="pageTitle">${config.title}</span>
+            `;
+            document.getElementById('headerActions').innerHTML = config.actions;
+
+            if (page === 'portfolio') renderPortfolios();
+            if (page === 'customers') renderCustomers();
+            if (page === 'matches') renderMatches();
+            if (page === 'backup') updateBackupStats();
         }
 
         document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
@@ -1658,23 +1670,24 @@
         function openPortfolioModal(id = null) {
             const modal = document.getElementById('portfolioModal');
             const form = document.getElementById('portfolioForm');
+
             form.reset();
             document.getElementById('portfolioId').value = '';
-            currentPortfolioImages = [];
             document.getElementById('portfolioImages').value = '';
+            currentPortfolioImages = [];
 
             if (id) {
                 const property = portfolios.find(p => p.id === id);
                 if (property) {
                     document.getElementById('portfolioModalTitle').textContent = 'İlan Düzenle';
                     document.getElementById('portfolioId').value = property.id;
-                    document.getElementById('portfolioTitle').value = property.title;
-                    document.getElementById('portfolioType').value = property.type;
-                    document.getElementById('portfolioStatus').value = property.status;
-                    document.getElementById('portfolioPrice').value = property.price;
-                    document.getElementById('portfolioArea').value = property.area;
-                    document.getElementById('portfolioRooms').value = property.rooms;
-                    document.getElementById('portfolioCity').value = property.city;
+                    document.getElementById('portfolioTitle').value = property.title || '';
+                    document.getElementById('portfolioType').value = property.type || '';
+                    document.getElementById('portfolioStatus').value = property.status || '';
+                    document.getElementById('portfolioPrice').value = property.price || '';
+                    document.getElementById('portfolioArea').value = property.area || '';
+                    document.getElementById('portfolioRooms').value = property.rooms || '';
+                    document.getElementById('portfolioCity').value = property.city || '';
                     document.getElementById('portfolioDistrict').value = property.district || '';
                     document.getElementById('portfolioNeighborhood').value = property.neighborhood || '';
                     document.getElementById('portfolioFloor').value = property.floor || '';
@@ -1745,13 +1758,13 @@
         }
 
         function deletePortfolio(id) {
-            if (confirm('Bu ilanı silmek istediğinizden emin misiniz?')) {
-                portfolios = portfolios.filter(p => p.id !== id);
-                localStorage.setItem('portfolios', JSON.stringify(portfolios));
-                showToast('İlan silindi', 'success');
-                renderPortfolios();
-                updateBackupStats();
-            }
+            if (!confirm('Bu ilanı silmek istediğinizden emin misiniz?')) return;
+
+            portfolios = portfolios.filter(p => p.id !== id);
+            localStorage.setItem('portfolios', JSON.stringify(portfolios));
+            showToast('İlan silindi', 'success');
+            renderPortfolios();
+            updateBackupStats();
         }
 
         function renderPortfolios() {
@@ -1765,10 +1778,10 @@
 
             const filtered = portfolios.filter(p => {
                 const matchSearch = !searchTerm ||
-                    p.title.toLowerCase().includes(searchTerm) ||
-                    p.city.toLowerCase().includes(searchTerm) ||
-                    (p.district && p.district.toLowerCase().includes(searchTerm)) ||
-                    (p.neighborhood && p.neighborhood.toLowerCase().includes(searchTerm));
+                    (p.title || '').toLowerCase().includes(searchTerm) ||
+                    (p.city || '').toLowerCase().includes(searchTerm) ||
+                    (p.district || '').toLowerCase().includes(searchTerm) ||
+                    (p.neighborhood || '').toLowerCase().includes(searchTerm);
 
                 const matchType = !typeFilter || p.type === typeFilter;
                 const matchStatus = !statusFilter || p.status === statusFilter;
@@ -1788,9 +1801,15 @@
             }
 
             empty.style.display = 'none';
+
             grid.innerHTML = filtered.map(property => {
                 const coverImage = getPropertyCoverImage(property);
                 const safeTitle = escapeHtml(property.title);
+                const safeType = escapeHtml(property.type);
+                const safeStatus = escapeHtml(property.status);
+                const safeRooms = escapeHtml(property.rooms);
+                const safeCity = escapeHtml(property.city);
+                const safeDistrict = escapeHtml(property.district || '');
 
                 return `
                     <div class="card">
@@ -1808,23 +1827,26 @@
                                     : ''
                                 }
                             </div>
-                            <span class="card-badge badge-${property.label === 'Aktif' ? 'active' : property.label === 'Satıldı' ? 'sold' : 'rented'}">${property.label}</span>
+                            <span class="card-badge badge-${property.label === 'Aktif' ? 'active' : property.label === 'Satıldı' ? 'sold' : 'rented'}">${escapeHtml(property.label)}</span>
                         </div>
+
                         <div class="card-info">
                             <div class="info-row">
                                 <i class="fas fa-building"></i>
-                                <span>${escapeHtml(property.type)} • ${escapeHtml(property.status)}</span>
+                                <span>${safeType} • ${safeStatus}</span>
                             </div>
                             <div class="info-row">
                                 <i class="fas fa-door-open"></i>
-                                <span>${escapeHtml(property.rooms)} • ${property.area} m²</span>
+                                <span>${safeRooms} • ${property.area} m²</span>
                             </div>
                             <div class="info-row">
                                 <i class="fas fa-map-marker-alt"></i>
-                                <span>${escapeHtml(property.city)}${property.district ? ', ' + escapeHtml(property.district) : ''}</span>
+                                <span>${safeCity}${safeDistrict ? ', ' + safeDistrict : ''}</span>
                             </div>
                         </div>
-                        <div class="card-price">${property.price.toLocaleString('tr-TR')} ₺</div>
+
+                        <div class="card-price">${Number(property.price).toLocaleString('tr-TR')} ₺</div>
+
                         <div class="card-actions">
                             <button class="btn btn-secondary btn-small" onclick="openPortfolioModal('${property.id}')">
                                 <i class="fas fa-edit"></i> Düzenle
@@ -1847,6 +1869,7 @@
         function openCustomerModal(id = null) {
             const modal = document.getElementById('customerModal');
             const form = document.getElementById('customerForm');
+
             form.reset();
             document.getElementById('customerId').value = '';
 
@@ -1855,13 +1878,13 @@
                 if (customer) {
                     document.getElementById('customerModalTitle').textContent = 'Müşteri Düzenle';
                     document.getElementById('customerId').value = customer.id;
-                    document.getElementById('customerName').value = customer.name;
-                    document.getElementById('customerPhone').value = customer.phone;
+                    document.getElementById('customerName').value = customer.name || '';
+                    document.getElementById('customerPhone').value = customer.phone || '';
                     document.getElementById('customerEmail').value = customer.email || '';
-                    document.getElementById('customerSearchType').value = customer.searchType;
-                    document.getElementById('customerPropertyType').value = customer.propertyType;
-                    document.getElementById('customerMinBudget').value = customer.minBudget;
-                    document.getElementById('customerMaxBudget').value = customer.maxBudget;
+                    document.getElementById('customerSearchType').value = customer.searchType || '';
+                    document.getElementById('customerPropertyType').value = customer.propertyType || '';
+                    document.getElementById('customerMinBudget').value = customer.minBudget || '';
+                    document.getElementById('customerMaxBudget').value = customer.maxBudget || '';
                     document.getElementById('customerCity').value = customer.city || '';
                     document.getElementById('customerDistrict').value = customer.district || '';
                     document.getElementById('customerMinArea').value = customer.minArea || '';
@@ -1930,13 +1953,13 @@
         }
 
         function deleteCustomer(id) {
-            if (confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) {
-                customers = customers.filter(c => c.id !== id);
-                localStorage.setItem('customers', JSON.stringify(customers));
-                showToast('Müşteri silindi', 'success');
-                renderCustomers();
-                updateBackupStats();
-            }
+            if (!confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) return;
+
+            customers = customers.filter(c => c.id !== id);
+            localStorage.setItem('customers', JSON.stringify(customers));
+            showToast('Müşteri silindi', 'success');
+            renderCustomers();
+            updateBackupStats();
         }
 
         function renderCustomers() {
@@ -1949,8 +1972,8 @@
 
             const filtered = customers.filter(c => {
                 const matchSearch = !searchTerm ||
-                    c.name.toLowerCase().includes(searchTerm) ||
-                    c.phone.includes(searchTerm);
+                    (c.name || '').toLowerCase().includes(searchTerm) ||
+                    (c.phone || '').includes(searchTerm);
 
                 const matchType = !typeFilter || c.searchType === typeFilter;
                 const matchStatus = !statusFilter || c.status === statusFilter;
@@ -1968,4 +1991,13 @@
                 return;
             }
 
-            empty.style
+            empty.style.display = 'none';
+
+            grid.innerHTML = filtered.map(customer => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Müşteri No: ${escapeHtml(customer.number)}</div>
+                            <h3 class="card-title">${escapeHtml(customer.name)}</h3>
+                        </div>
+                        <span class="card-badge badge-${customer.status === 'Aktif' ? 'active' : customer.status === '
