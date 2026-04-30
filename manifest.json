@@ -1,11 +1,15 @@
 {
-  "name": "Emlak CRM",
-  "short_name": "EmlakCRM",
+  "name": "Emlak CRM - Portföy Yönetim Sistemi",
+  "short_name": "Emlak CRM",
+  "description": "Emlak portföyü, müşteri takibi, eşleştirme ve fotoğraflı ilan yönetimi için PWA destekli CRM uygulaması.",
+  "lang": "tr-TR",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#1A1A2E",
+  "orientation": "portrait-primary",
   "theme_color": "#FF7A00",
-  "lang": "tr",
+  "background_color": "#1A1A2E",
+  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
       "src": "./icons/icon-192.png",
