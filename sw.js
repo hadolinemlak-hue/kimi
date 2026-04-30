@@ -1,5 +1,5 @@
-const STATIC_CACHE = 'emlak-crm-static-v2';
-const RUNTIME_CACHE = 'emlak-crm-runtime-v2';
+const STATIC_CACHE = 'emlak-crm-static-v3';
+const RUNTIME_CACHE = 'emlak-crm-runtime-v3';
 
 const APP_SHELL = [
   './',
@@ -36,13 +36,13 @@ self.addEventListener('fetch', event => {
 
   if (request.method !== 'GET') return;
 
-  // Base64 / data URL isteklerini SW yönetmesin
+  // Base64 / localStorage içindeki data:image içerikleri SW tarafından işlenmesin
   if (url.protocol === 'data:') return;
 
-  // Tarayıcı eklenti / özel protokolleri atla
+  // Desteklenmeyen protokolleri atla
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
-  // Sayfa gezinmeleri için network-first
+  // Sayfa gezintilerinde önce network, olmazsa cache, en son index.html
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -61,7 +61,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Aynı origin statik dosyalar ve görseller için stale-while-revalidate benzeri akış
+  // Aynı origin dosyalar için cache-first + arkada network güncellemesi
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(request).then(cached => {
@@ -84,20 +84,19 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Dış kaynaklar için basit cache-first fallback
+  // CDN gibi dış kaynaklar için network-first, hata olursa cache fallback
   event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
+    fetch(request)
+      .then(response => {
+        if (!response || response.status !== 200) return response;
 
-      return fetch(request)
-        .then(response => {
-          const responseClone = response.clone();
-          caches.open(RUNTIME_CACHE).then(cache => {
-            cache.put(request, responseClone);
-          });
-          return response;
-        })
-        .catch(() => cached);
-    })
+        const responseClone = response.clone();
+        caches.open(RUNTIME_CACHE).then(cache => {
+          cache.put(request, responseClone);
+        });
+
+        return response;
+      })
+      .catch(() => caches.match(request))
   );
 });
