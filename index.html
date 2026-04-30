@@ -268,6 +268,43 @@
             border-color: var(--primary);
         }
 
+        .property-image {
+            width: calc(100% + 48px);
+            height: 220px;
+            object-fit: cover;
+            display: block;
+            margin: -24px -24px 18px -24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--sidebar-bg);
+        }
+
+        .property-image-placeholder {
+            width: calc(100% + 48px);
+            height: 220px;
+            margin: -24px -24px 18px -24px;
+            background: linear-gradient(135deg, #343450 0%, #232338 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            font-size: 42px;
+        }
+
+        .image-count-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 122, 0, 0.15);
+            color: var(--primary-light);
+            border: 1px solid rgba(255, 122, 0, 0.35);
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -415,6 +452,62 @@
             resize: vertical;
             min-height: 100px;
             font-family: inherit;
+        }
+
+        .photo-upload-box {
+            background: var(--sidebar-bg);
+            border: 1px dashed var(--primary);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .photo-help {
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .photo-preview-grid {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .photo-preview-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--dark-bg);
+            aspect-ratio: 1 / 1;
+        }
+
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .photo-remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-remove-btn:hover {
+            background: var(--danger);
         }
 
         .modal {
@@ -835,6 +928,11 @@
             .budget-range {
                 grid-template-columns: 1fr;
             }
+
+            .property-image,
+            .property-image-placeholder {
+                height: 200px;
+            }
         }
     </style>
 </head>
@@ -1105,6 +1203,10 @@
                             <span>Onaylanmış Eşleşme: <strong id="backupStatsMatches">0</strong></span>
                         </div>
                         <div class="info-row">
+                            <i class="fas fa-images"></i>
+                            <span>Toplam Fotoğraf: <strong id="backupStatsImages">0</strong></span>
+                        </div>
+                        <div class="info-row">
                             <i class="fas fa-database"></i>
                             <span>Toplam Veri Boyutu: <strong id="backupStatsSize">0 KB</strong></span>
                         </div>
@@ -1207,6 +1309,25 @@
                                 <option value="Kiralandı">Kiralandı</option>
                             </select>
                         </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label><i class="fas fa-camera"></i> İlan Fotoğrafları</label>
+                            <div class="photo-upload-box">
+                                <input
+                                    type="file"
+                                    id="portfolioImages"
+                                    class="form-control"
+                                    accept="image/*"
+                                    multiple
+                                >
+                                <div class="photo-help">
+                                    JPG / PNG / WebP yükleyebilirsiniz. Fotoğraflar otomatik küçültülüp sıkıştırılır.
+                                    İlk fotoğraf ilan kartında kapak görseli olarak kullanılır.
+                                </div>
+                                <div class="photo-preview-grid" id="portfolioImagePreview"></div>
+                            </div>
+                        </div>
+
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <label><i class="fas fa-align-left"></i> Açıklama</label>
                             <textarea class="form-control" id="portfolioDescription"></textarea>
@@ -1332,6 +1453,12 @@
         let portfolios = JSON.parse(localStorage.getItem('portfolios')) || [];
         let customers = JSON.parse(localStorage.getItem('customers')) || [];
         let confirmedMatches = JSON.parse(localStorage.getItem('confirmedMatches')) || [];
+        let currentPortfolioImages = [];
+
+        portfolios = portfolios.map(p => ({
+            ...p,
+            images: Array.isArray(p.images) ? p.images : []
+        }));
 
         function sanitizePhone(phone) {
             if (!phone) return '';
@@ -1340,7 +1467,6 @@
             if (cleaned.startsWith('0')) {
                 cleaned = '90' + cleaned.substring(1);
             } else if (cleaned.startsWith('90')) {
-                // olduğu gibi bırak
             } else if (cleaned.length === 10) {
                 cleaned = '90' + cleaned;
             }
@@ -1359,6 +1485,108 @@
                 `Merhaba ${name || ''}, ilan / talep detayınız hakkında bilgi vermek için yazıyorum.`
             );
             return cleaned ? `https://wa.me/${cleaned}?text=${message}` : '#';
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function getPropertyCoverImage(property) {
+            return property.images && property.images.length ? property.images[0] : null;
+        }
+
+        function renderPortfolioImagePreview() {
+            const preview = document.getElementById('portfolioImagePreview');
+            preview.innerHTML = '';
+
+            if (!currentPortfolioImages.length) return;
+
+            preview.innerHTML = currentPortfolioImages.map((img, index) => `
+                <div class="photo-preview-item">
+                    <img src="${img}" alt="İlan Fotoğrafı ${index + 1}">
+                    <button type="button" class="photo-remove-btn" onclick="removePortfolioImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removePortfolioImage(index) {
+            currentPortfolioImages.splice(index, 1);
+            renderPortfolioImagePreview();
+        }
+
+        function compressImage(file, maxWidth = 1400, quality = 0.75) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = event => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let { width, height } = img;
+
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const compressed = canvas.toDataURL('image/jpeg', quality);
+                        resolve(compressed);
+                    };
+
+                    img.onerror = reject;
+                    img.src = event.target.result;
+                };
+
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handlePortfolioImages(event) {
+            const files = Array.from(event.target.files || []);
+            if (!files.length) return;
+
+            const validFiles = files.filter(file => file.type.startsWith('image/'));
+            if (!validFiles.length) {
+                showToast('Lütfen geçerli görsel dosyaları seçin', 'warning');
+                return;
+            }
+
+            if (currentPortfolioImages.length + validFiles.length > 10) {
+                showToast('En fazla 10 fotoğraf ekleyebilirsiniz', 'warning');
+                event.target.value = '';
+                return;
+            }
+
+            showToast('Fotoğraflar hazırlanıyor...', 'success');
+
+            try {
+                for (const file of validFiles) {
+                    const compressed = await compressImage(file);
+                    currentPortfolioImages.push(compressed);
+                }
+
+                renderPortfolioImagePreview();
+                showToast('Fotoğraflar eklendi', 'success');
+            } catch (error) {
+                showToast('Fotoğraflar işlenirken hata oluştu', 'error');
+            }
+
+            event.target.value = '';
         }
 
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -1432,6 +1660,8 @@
             const form = document.getElementById('portfolioForm');
             form.reset();
             document.getElementById('portfolioId').value = '';
+            currentPortfolioImages = [];
+            document.getElementById('portfolioImages').value = '';
 
             if (id) {
                 const property = portfolios.find(p => p.id === id);
@@ -1452,12 +1682,14 @@
                     document.getElementById('portfolioHeating').value = property.heating || '';
                     document.getElementById('portfolioDescription').value = property.description || '';
                     document.getElementById('portfolioLabel').value = property.label || 'Aktif';
+                    currentPortfolioImages = Array.isArray(property.images) ? [...property.images] : [];
                 }
             } else {
                 document.getElementById('portfolioModalTitle').textContent = 'Yeni İlan Ekle';
                 document.getElementById('portfolioLabel').value = 'Aktif';
             }
 
+            renderPortfolioImagePreview();
             modal.classList.add('active');
         }
 
@@ -1489,21 +1721,27 @@
                 heating: document.getElementById('portfolioHeating').value,
                 description: document.getElementById('portfolioDescription').value.trim(),
                 label: document.getElementById('portfolioLabel').value,
+                images: currentPortfolioImages,
                 createdAt: existing ? existing.createdAt : new Date().toISOString()
             };
 
-            if (id) {
-                const index = portfolios.findIndex(p => p.id === id);
-                portfolios[index] = property;
-                showToast('İlan başarıyla güncellendi', 'success');
-            } else {
-                portfolios.push(property);
-                showToast('İlan başarıyla eklendi', 'success');
-            }
+            try {
+                if (id) {
+                    const index = portfolios.findIndex(p => p.id === id);
+                    portfolios[index] = property;
+                    showToast('İlan başarıyla güncellendi', 'success');
+                } else {
+                    portfolios.push(property);
+                    showToast('İlan başarıyla eklendi', 'success');
+                }
 
-            localStorage.setItem('portfolios', JSON.stringify(portfolios));
-            closePortfolioModal();
-            renderPortfolios();
+                localStorage.setItem('portfolios', JSON.stringify(portfolios));
+                closePortfolioModal();
+                renderPortfolios();
+                updateBackupStats();
+            } catch (error) {
+                showToast('Veri kaydedilemedi. Fotoğraf sayısını azaltın.', 'error');
+            }
         }
 
         function deletePortfolio(id) {
@@ -1512,6 +1750,7 @@
                 localStorage.setItem('portfolios', JSON.stringify(portfolios));
                 showToast('İlan silindi', 'success');
                 renderPortfolios();
+                updateBackupStats();
             }
         }
 
@@ -1528,7 +1767,8 @@
                 const matchSearch = !searchTerm ||
                     p.title.toLowerCase().includes(searchTerm) ||
                     p.city.toLowerCase().includes(searchTerm) ||
-                    (p.district && p.district.toLowerCase().includes(searchTerm));
+                    (p.district && p.district.toLowerCase().includes(searchTerm)) ||
+                    (p.neighborhood && p.neighborhood.toLowerCase().includes(searchTerm));
 
                 const matchType = !typeFilter || p.type === typeFilter;
                 const matchStatus = !statusFilter || p.status === statusFilter;
@@ -1548,46 +1788,61 @@
             }
 
             empty.style.display = 'none';
-            grid.innerHTML = filtered.map(property => `
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">İlan No: ${property.number}</div>
-                            <h3 class="card-title">${property.title}</h3>
+            grid.innerHTML = filtered.map(property => {
+                const coverImage = getPropertyCoverImage(property);
+                const safeTitle = escapeHtml(property.title);
+
+                return `
+                    <div class="card">
+                        ${coverImage
+                            ? `<img class="property-image" src="${coverImage}" alt="${safeTitle}">`
+                            : `<div class="property-image-placeholder"><i class="fas fa-image"></i></div>`
+                        }
+
+                        <div class="card-header">
+                            <div>
+                                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">İlan No: ${property.number}</div>
+                                <h3 class="card-title">${safeTitle}</h3>
+                                ${property.images && property.images.length
+                                    ? `<div class="image-count-badge"><i class="fas fa-camera"></i> ${property.images.length} fotoğraf</div>`
+                                    : ''
+                                }
+                            </div>
+                            <span class="card-badge badge-${property.label === 'Aktif' ? 'active' : property.label === 'Satıldı' ? 'sold' : 'rented'}">${property.label}</span>
                         </div>
-                        <span class="card-badge badge-${property.label === 'Aktif' ? 'active' : property.label === 'Satıldı' ? 'sold' : 'rented'}">${property.label}</span>
+                        <div class="card-info">
+                            <div class="info-row">
+                                <i class="fas fa-building"></i>
+                                <span>${escapeHtml(property.type)} • ${escapeHtml(property.status)}</span>
+                            </div>
+                            <div class="info-row">
+                                <i class="fas fa-door-open"></i>
+                                <span>${escapeHtml(property.rooms)} • ${property.area} m²</span>
+                            </div>
+                            <div class="info-row">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${escapeHtml(property.city)}${property.district ? ', ' + escapeHtml(property.district) : ''}</span>
+                            </div>
+                        </div>
+                        <div class="card-price">${property.price.toLocaleString('tr-TR')} ₺</div>
+                        <div class="card-actions">
+                            <button class="btn btn-secondary btn-small" onclick="openPortfolioModal('${property.id}')">
+                                <i class="fas fa-edit"></i> Düzenle
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="deletePortfolio('${property.id}')">
+                                <i class="fas fa-trash"></i> Sil
+                            </button>
+                        </div>
                     </div>
-                    <div class="card-info">
-                        <div class="info-row">
-                            <i class="fas fa-building"></i>
-                            <span>${property.type} • ${property.status}</span>
-                        </div>
-                        <div class="info-row">
-                            <i class="fas fa-door-open"></i>
-                            <span>${property.rooms} • ${property.area} m²</span>
-                        </div>
-                        <div class="info-row">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>${property.city}${property.district ? ', ' + property.district : ''}</span>
-                        </div>
-                    </div>
-                    <div class="card-price">${property.price.toLocaleString('tr-TR')} ₺</div>
-                    <div class="card-actions">
-                        <button class="btn btn-secondary btn-small" onclick="openPortfolioModal('${property.id}')">
-                            <i class="fas fa-edit"></i> Düzenle
-                        </button>
-                        <button class="btn btn-danger btn-small" onclick="deletePortfolio('${property.id}')">
-                            <i class="fas fa-trash"></i> Sil
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         document.getElementById('searchPortfolio').addEventListener('input', renderPortfolios);
         document.getElementById('filterPropertyType').addEventListener('change', renderPortfolios);
         document.getElementById('filterPropertyStatus').addEventListener('change', renderPortfolios);
         document.getElementById('filterPropertyLabel').addEventListener('change', renderPortfolios);
+        document.getElementById('portfolioImages').addEventListener('change', handlePortfolioImages);
 
         function openCustomerModal(id = null) {
             const modal = document.getElementById('customerModal');
@@ -1671,6 +1926,7 @@
             localStorage.setItem('customers', JSON.stringify(customers));
             closeCustomerModal();
             renderCustomers();
+            updateBackupStats();
         }
 
         function deleteCustomer(id) {
@@ -1679,6 +1935,7 @@
                 localStorage.setItem('customers', JSON.stringify(customers));
                 showToast('Müşteri silindi', 'success');
                 renderCustomers();
+                updateBackupStats();
             }
         }
 
@@ -1711,349 +1968,4 @@
                 return;
             }
 
-            empty.style.display = 'none';
-            grid.innerHTML = filtered.map(customer => `
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Müşteri No: ${customer.number}</div>
-                            <h3 class="card-title">${customer.name}</h3>
-                        </div>
-                        <span class="card-badge badge-${customer.status === 'Aktif' ? 'active' : customer.status === 'Tamamlandı' ? 'sold' : 'rented'}">${customer.status}</span>
-                    </div>
-                    <div class="card-info">
-                        <div class="info-row">
-                            <i class="fas fa-phone"></i>
-                            <a href="${getTelLink(customer.phone)}">${customer.phone}</a>
-                        </div>
-                        <div class="info-row">
-                            <i class="fas fa-search"></i>
-                            <span>${customer.searchType} • ${customer.propertyType}</span>
-                        </div>
-                        <div class="info-row">
-                            <i class="fas fa-lira-sign"></i>
-                            <span>Bütçe: ${customer.minBudget.toLocaleString('tr-TR')} - ${customer.maxBudget.toLocaleString('tr-TR')} ₺</span>
-                        </div>
-                        ${customer.city ? `
-                        <div class="info-row">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>${customer.city}${customer.district ? ', ' + customer.district : ''}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                    <div class="card-actions">
-                        <a class="btn btn-success btn-small" href="${getWhatsAppLink(customer.phone, customer.name)}" target="_blank" rel="noopener noreferrer">
-                            <i class="fab fa-whatsapp"></i> WhatsApp
-                        </a>
-                        <button class="btn btn-secondary btn-small" onclick="openCustomerModal('${customer.id}')">
-                            <i class="fas fa-edit"></i> Düzenle
-                        </button>
-                        <button class="btn btn-danger btn-small" onclick="deleteCustomer('${customer.id}')">
-                            <i class="fas fa-trash"></i> Sil
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        document.getElementById('searchCustomer').addEventListener('input', renderCustomers);
-        document.getElementById('filterCustomerType').addEventListener('change', renderCustomers);
-        document.getElementById('filterCustomerStatus').addEventListener('change', renderCustomers);
-
-        function calculateMatchScore(property, customer) {
-            let score = 0;
-            const reasons = [];
-
-            if (property.price >= customer.minBudget && property.price <= customer.maxBudget) {
-                score += 40;
-                reasons.push('Bütçe uyumlu');
-            } else {
-                return { score: 0, reasons: ['Bütçe uyumsuz'] };
-            }
-
-            if (property.type === customer.propertyType) {
-                score += 20;
-                reasons.push('Tür uyumlu');
-            }
-
-            const statusMatch = (property.status === 'Satılık' && customer.searchType === 'Alıcı') ||
-                                (property.status === 'Kiralık' && customer.searchType === 'Kiracı');
-
-            if (statusMatch) {
-                score += 20;
-                reasons.push('Durum uyumlu');
-            }
-
-            if (customer.city && property.city.toLowerCase() === customer.city.toLowerCase()) {
-                score += 5;
-                if (customer.district && property.district &&
-                    property.district.toLowerCase() === customer.district.toLowerCase()) {
-                    score += 5;
-                    reasons.push('Konum tam uyumlu');
-                } else {
-                    reasons.push('İl uyumlu');
-                }
-            }
-
-            if (customer.minArea && property.area >= parseFloat(customer.minArea)) {
-                score += 5;
-                reasons.push('Metrekare uygun');
-            }
-
-            if (customer.roomPreference && property.rooms === customer.roomPreference) {
-                score += 5;
-                reasons.push('Oda sayısı uyumlu');
-            }
-
-            return { score, reasons };
-        }
-
-        function renderMatches() {
-            const container = document.getElementById('matchesContainer');
-            const empty = document.getElementById('matchesEmpty');
-
-            const allMatches = [];
-
-            customers.forEach(customer => {
-                portfolios.forEach(property => {
-                    if (property.label === 'Aktif') {
-                        const matchResult = calculateMatchScore(property, customer);
-                        if (matchResult.score > 0) {
-                            allMatches.push({
-                                customer,
-                                property,
-                                score: matchResult.score,
-                                reasons: matchResult.reasons,
-                                confirmed: confirmedMatches.some(m =>
-                                    m.customerId === customer.id && m.propertyId === property.id
-                                )
-                            });
-                        }
-                    }
-                });
-            });
-
-            allMatches.sort((a, b) => b.score - a.score);
-
-            document.getElementById('totalMatches').textContent = allMatches.length;
-            document.getElementById('highScoreMatches').textContent = allMatches.filter(m => m.score > 80).length;
-            document.getElementById('confirmedMatches').textContent = confirmedMatches.length;
-
-            if (allMatches.length === 0) {
-                container.innerHTML = '';
-                empty.style.display = 'block';
-                return;
-            }
-
-            empty.style.display = 'none';
-            container.innerHTML = allMatches.map((match, index) => {
-                const scoreClass = match.score > 80 ? 'score-high' : match.score > 50 ? 'score-medium' : 'score-low';
-
-                return `
-                    <div class="match-card">
-                        <div class="match-card-header">
-                            <div style="flex:1;">
-                                <h4 style="color: var(--primary); margin-bottom: 8px;">Eşleşme #${index + 1}</h4>
-                                <div class="match-score">
-                                    <span style="color: var(--text-muted); min-width: 80px;">Uyum Skoru:</span>
-                                    <div class="score-bar" style="flex: 1;">
-                                        <div class="score-fill ${scoreClass}" style="width: ${match.score}%;"></div>
-                                    </div>
-                                    <span style="font-size: 18px; color: var(--primary);">${match.score}/100</span>
-                                </div>
-                                <div style="margin-top: 8px; color: var(--text-secondary); font-size: 14px;">
-                                    ${match.reasons.join(' • ')}
-                                </div>
-                            </div>
-                            ${match.confirmed
-                                ? '<span class="card-badge badge-active"><i class="fas fa-check"></i> Onaylandı</span>'
-                                : `<button class="btn btn-success btn-small" onclick="confirmMatch('${match.customer.id}', '${match.property.id}')">
-                                        <i class="fas fa-check"></i> Onayla
-                                   </button>`
-                            }
-                        </div>
-                        <div class="match-grid">
-                            <div class="match-entity">
-                                <h4><i class="fas fa-user"></i> Müşteri</h4>
-                                <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-                                    <div><strong>${match.customer.name}</strong></div>
-                                    <div style="font-size: 14px;">
-                                        <a href="${getTelLink(match.customer.phone)}" style="color: var(--text-secondary); text-decoration: none;">
-                                            ${match.customer.phone}
-                                        </a>
-                                    </div>
-                                    <div style="font-size: 14px;">
-                                        <a href="${getWhatsAppLink(match.customer.phone, match.customer.name)}" target="_blank" rel="noopener noreferrer" style="color: var(--success); text-decoration: none; font-weight: 600;">
-                                            <i class="fab fa-whatsapp"></i> WhatsApp mesaj gönder
-                                        </a>
-                                    </div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">${match.customer.searchType} • ${match.customer.propertyType}</div>
-                                    <div style="font-size: 14px; color: var(--primary);">
-                                        ${match.customer.minBudget.toLocaleString('tr-TR')} - ${match.customer.maxBudget.toLocaleString('tr-TR')} ₺
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="match-icon">
-                                <i class="fas fa-arrow-right-arrow-left"></i>
-                            </div>
-                            <div class="match-entity">
-                                <h4><i class="fas fa-home"></i> Portföy</h4>
-                                <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-                                    <div><strong>${match.property.title}</strong></div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">${match.property.type} • ${match.property.status}</div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">${match.property.rooms} • ${match.property.area} m²</div>
-                                    <div style="font-size: 14px; color: var(--primary); font-weight: 600;">
-                                        ${match.property.price.toLocaleString('tr-TR')} ₺
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function confirmMatch(customerId, propertyId) {
-            const exists = confirmedMatches.some(m => m.customerId === customerId && m.propertyId === propertyId);
-            if (exists) {
-                showToast('Bu eşleşme zaten onaylı', 'warning');
-                return;
-            }
-
-            confirmedMatches.push({
-                customerId,
-                propertyId,
-                confirmedAt: new Date().toISOString()
-            });
-
-            localStorage.setItem('confirmedMatches', JSON.stringify(confirmedMatches));
-            showToast('Eşleşme onaylandı', 'success');
-            renderMatches();
-        }
-
-        function refreshMatches() {
-            renderMatches();
-            showToast('Eşleşmeler yenilendi', 'success');
-        }
-
-        function updateBackupStats() {
-            document.getElementById('backupStatsPortfolio').textContent = portfolios.length;
-            document.getElementById('backupStatsCustomers').textContent = customers.length;
-            document.getElementById('backupStatsMatches').textContent = confirmedMatches.length;
-
-            const totalData = JSON.stringify({ portfolios, customers, confirmedMatches });
-            const sizeKB = (new Blob([totalData]).size / 1024).toFixed(2);
-            document.getElementById('backupStatsSize').textContent = `${sizeKB} KB`;
-
-            const lastBackup = localStorage.getItem('lastBackupDate');
-            if (lastBackup) {
-                const date = new Date(lastBackup);
-                document.getElementById('lastBackupDate').textContent = date.toLocaleString('tr-TR');
-            }
-        }
-
-        document.getElementById('downloadBackupBtn').addEventListener('click', () => {
-            const backup = {
-                portfolios,
-                customers,
-                confirmedMatches,
-                exportDate: new Date().toISOString(),
-                version: '1.0.0'
-            };
-
-            const dataStr = JSON.stringify(backup, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `emlak_crm_yedek_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-
-            localStorage.setItem('lastBackupDate', new Date().toISOString());
-            updateBackupStats();
-            showToast('Yedek başarıyla indirildi', 'success');
-        });
-
-        document.getElementById('uploadBackupBtn').addEventListener('click', () => {
-            document.getElementById('backupFileInput').click();
-        });
-
-        document.getElementById('backupFileInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const backup = JSON.parse(event.target.result);
-
-                    if (!backup.portfolios || !backup.customers || !backup.confirmedMatches) {
-                        showToast('Geçersiz yedek dosyası!', 'error');
-                        return;
-                    }
-
-                    if (confirm('Mevcut veriyi silip yedeği yüklemek istediğinizden emin misiniz?')) {
-                        portfolios = backup.portfolios;
-                        customers = backup.customers;
-                        confirmedMatches = backup.confirmedMatches;
-
-                        localStorage.setItem('portfolios', JSON.stringify(portfolios));
-                        localStorage.setItem('customers', JSON.stringify(customers));
-                        localStorage.setItem('confirmedMatches', JSON.stringify(confirmedMatches));
-
-                        showToast('Yedek başarıyla yüklendi', 'success');
-                        updateBackupStats();
-                        renderPortfolios();
-                        renderCustomers();
-                        renderMatches();
-                    }
-                } catch (error) {
-                    showToast('Yedek dosyası okunamadı!', 'error');
-                }
-            };
-            reader.readAsText(file);
-            e.target.value = '';
-        });
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-
-            const icon = type === 'success'
-                ? 'fa-check-circle'
-                : type === 'error'
-                ? 'fa-times-circle'
-                : 'fa-exclamation-circle';
-
-            toast.innerHTML = `
-                <i class="fas ${icon}"></i>
-                <span>${message}</span>
-            `;
-
-            container.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-
-        window.addEventListener('click', (e) => {
-            if (e.target.id === 'portfolioModal') closePortfolioModal();
-            if (e.target.id === 'customerModal') closeCustomerModal();
-        });
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(() => console.log('Service Worker kayıt edildi'))
-                    .catch(err => console.error('SW hatası:', err));
-            });
-        }
-
-        switchPage('portfolio');
-        updateBackupStats();
-    </script>
-</body>
-</html>
+            empty.style
